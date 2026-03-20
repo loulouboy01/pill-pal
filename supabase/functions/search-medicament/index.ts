@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DEFAULT_API_URL = "https://bdpmgf.vedielaute.fr";
+const API_URL = "https://medicaments-api.giygas.dev";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
   try {
     let q = "";
 
-    // Support both GET with query params and POST with body
     if (req.method === "GET") {
       const url = new URL(req.url);
       q = url.searchParams.get("q") || "";
@@ -32,8 +31,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiUrl = Deno.env.get("MEDICAMENTS_API_URL") || DEFAULT_API_URL;
-    const searchUrl = `${apiUrl}/api/medicaments/search?q=${encodeURIComponent(q)}`;
+    const searchUrl = `${API_URL}/v1/medicaments?search=${encodeURIComponent(q)}`;
 
     const response = await fetch(searchUrl);
     if (!response.ok) {
@@ -47,13 +45,12 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
-    // Map results to keep only useful fields
-    const results = (Array.isArray(data) ? data : data.results || []).map((item: any) => ({
-      cis: item.codeCIS || item.cis || item.code_cis || "",
-      denomination: item.denomination || item.nom || "",
-      forme: item.formePharmaceutique || item.forme || "",
-      voie: item.voieAdministration || item.voie || "",
-      statut_amm: item.statutAMM || item.statut_amm || "",
+    const results = (Array.isArray(data) ? data : []).map((item: any) => ({
+      cis: String(item.cis || ""),
+      denomination: item.elementPharmaceutique || "",
+      forme: item.formePharmaceutique || "",
+      voie: Array.isArray(item.voiesAdministration) ? item.voiesAdministration.join(", ") : "",
+      statut_amm: item.statusAutorisation || "",
     })).slice(0, 10);
 
     return new Response(
