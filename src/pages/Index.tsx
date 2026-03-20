@@ -77,7 +77,7 @@ export default function Index() {
 
       {/* FAB - only visible when list is not empty */}
       {!isEmpty && (
-        <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 gap-3">
+        <div className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 gap-3">
           <Button
             onClick={() => navigate("/ajouter")}
             className="h-12 rounded-2xl px-5 shadow-lg shadow-primary/20"
