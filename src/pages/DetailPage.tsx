@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMedicamentById, deleteMedicament } from "@/lib/medicaments-storage";
+import { getNotice, NoticeInfo } from "@/lib/api";
 import { Medicament } from "@/types/medicament";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Pencil, Pill, Calendar, Clock, Hash } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Trash2, Pencil, Pill, Calendar, Clock, Hash, FileText, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -17,10 +19,24 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Pill }[] = [
+  { key: "posologie", label: "Posologie recommandée", icon: Clock },
+  { key: "modeAdministration", label: "Mode et voie d'administration", icon: Pill },
+  { key: "momentPrise", label: "Moment de prise", icon: Calendar },
+  { key: "delaiMinimumEntrePrises", label: "Délai minimum entre 2 prises", icon: Clock },
+  { key: "dureeMaxTraitement", label: "Durée maximale de traitement", icon: Calendar },
+  { key: "contreIndications", label: "Contre-indications", icon: AlertTriangle },
+  { key: "effetsIndesirables", label: "Effets indésirables", icon: AlertTriangle },
+];
+
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [med, setMed] = useState<Medicament | null>(null);
+  const [notice, setNotice] = useState<NoticeInfo | null>(null);
+  const [noticeLoading, setNoticeLoading] = useState(false);
+  const [noticeError, setNoticeError] = useState<string | null>(null);
+  const [noticeFetched, setNoticeFetched] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -29,6 +45,21 @@ export default function DetailPage() {
       else navigate("/");
     }
   }, [id, navigate]);
+
+  function handleFetchNotice() {
+    if (!med?.codeCIS || noticeFetched) return;
+    setNoticeLoading(true);
+    setNoticeError(null);
+    setNoticeFetched(true);
+
+    getNotice(med.codeCIS)
+      .then((data) => setNotice(data))
+      .catch((err) => {
+        console.error(err);
+        setNoticeError("Impossible de charger la notice. Réessayez plus tard.");
+      })
+      .finally(() => setNoticeLoading(false));
+  }
 
   if (!med) return null;
 
@@ -83,81 +114,151 @@ export default function DetailPage() {
           </div>
         </div>
 
-        {/* Posologie */}
-        <div className="rounded-2xl bg-card p-5 shadow-sm space-y-3">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            Posologie
-          </h3>
-          <div className="grid grid-cols-4 gap-2">
-            {posLabels.map(({ key, label }) => (
-              <div key={key} className="flex flex-col items-center rounded-xl bg-background p-3">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <span className="mt-1 text-xl font-semibold tabular-nums text-foreground">
-                  {med.posologie[key]}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="rounded-2xl bg-card p-5 shadow-sm space-y-4">
-          <div className="flex items-start gap-3">
-            <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Durée du traitement</p>
-              <p className="text-sm font-medium text-foreground">{med.dureeTraitement}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Hash className="mt-0.5 h-4 w-4 text-primary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Code CIS</p>
-              <p className="text-sm font-medium text-foreground">{med.codeCIS || "Non renseigné"}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Ajouté le</p>
-              <p className="text-sm font-medium text-foreground">
-                {new Date(med.dateAjout).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Delete */}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="h-12 w-full rounded-2xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+        {/* Tabs */}
+        <Tabs defaultValue="infos" onValueChange={(v) => v === "notice" && handleFetchNotice()}>
+          <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1 h-11">
+            <TabsTrigger value="infos" className="rounded-xl text-sm font-medium">
+              Informations
+            </TabsTrigger>
+            <TabsTrigger
+              value="notice"
+              className="rounded-xl text-sm font-medium"
+              disabled={!med.codeCIS}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer ce médicament
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer ce médicament ?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Cette action est irréversible. Le médicament sera supprimé de votre liste.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              <FileText className="mr-1.5 h-3.5 w-3.5" />
+              Notice
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Infos */}
+          <TabsContent value="infos" className="space-y-6 mt-4">
+            {/* Posologie */}
+            <div className="rounded-2xl bg-card p-5 shadow-sm space-y-3">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Posologie
+              </h3>
+              <div className="grid grid-cols-4 gap-2">
+                {posLabels.map(({ key, label }) => (
+                  <div key={key} className="flex flex-col items-center rounded-xl bg-background p-3">
+                    <span className="text-xs text-muted-foreground">{label}</span>
+                    <span className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                      {med.posologie[key]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="rounded-2xl bg-card p-5 shadow-sm space-y-4">
+              <div className="flex items-start gap-3">
+                <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Durée du traitement</p>
+                  <p className="text-sm font-medium text-foreground">{med.dureeTraitement}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Hash className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Code CIS</p>
+                  <p className="text-sm font-medium text-foreground">{med.codeCIS || "Non renseigné"}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Ajouté le</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(med.dateAjout).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Delete */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-12 w-full rounded-2xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer ce médicament
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer ce médicament ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. Le médicament sera supprimé de votre liste.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </TabsContent>
+
+          {/* Tab: Notice */}
+          <TabsContent value="notice" className="mt-4">
+            {!med.codeCIS && (
+              <div className="rounded-2xl bg-card p-6 shadow-sm text-center">
+                <p className="text-sm text-muted-foreground">
+                  Aucun code CIS associé à ce médicament. La notice n'est pas disponible.
+                </p>
+              </div>
+            )}
+
+            {noticeLoading && (
+              <div className="rounded-2xl bg-card p-8 shadow-sm flex flex-col items-center gap-3">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Chargement de la notice…</p>
+              </div>
+            )}
+
+            {noticeError && (
+              <div className="rounded-2xl bg-destructive/5 border border-destructive/20 p-5 space-y-3">
+                <p className="text-sm text-destructive font-medium">{noticeError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => { setNoticeFetched(false); handleFetchNotice(); }}
+                >
+                  Réessayer
+                </Button>
+              </div>
+            )}
+
+            {notice && (
+              <div className="space-y-3">
+                {noticeFields.map(({ key, label, icon: Icon }) => (
+                  <div key={key} className="rounded-2xl bg-card p-4 shadow-sm space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary shrink-0" />
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {label}
+                      </h4>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                      {notice[key]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
