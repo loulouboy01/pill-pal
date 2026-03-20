@@ -30,8 +30,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Re-create the file with explicit type to ensure Whisper recognizes the format
+    const audioBytes = await audioFile.arrayBuffer();
+    const properFile = new File([audioBytes], "audio.webm", { type: "audio/webm" });
+
     const whisperForm = new FormData();
-    whisperForm.append("file", audioFile, "audio.webm");
+    whisperForm.append("file", properFile);
     whisperForm.append("model", "whisper-1");
     whisperForm.append("language", "fr");
     whisperForm.append("response_format", "text");
