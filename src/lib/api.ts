@@ -1,0 +1,18 @@
+import { supabase } from "@/integrations/supabase/client";
+import { MedicamentSearchResult } from "@/types/medicament";
+
+export async function searchMedicament(query: string): Promise<MedicamentSearchResult[]> {
+  const { data, error } = await supabase.functions.invoke("search-medicament", {
+    body: { q: query },
+  });
+  if (error) throw new Error("Erreur lors de la recherche de médicaments");
+  return data?.results ?? [];
+}
+
+export async function analyzePrescription(imageBase64: string): Promise<any[]> {
+  const { data, error } = await supabase.functions.invoke("analyze-prescription", {
+    body: { image: imageBase64 },
+  });
+  if (error) throw new Error("Erreur lors de l'analyse de l'ordonnance");
+  return data?.medicaments ?? [];
+}
