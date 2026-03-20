@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "crypto";
+
 import { saveMedicament } from "@/lib/medicaments-storage";
 import { Medicament, MedicamentSearchResult, Posologie } from "@/types/medicament";
 import { MedicamentSearchInput } from "@/components/MedicamentSearchInput";
