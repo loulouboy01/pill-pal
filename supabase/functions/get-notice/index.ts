@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch the RCP page from the official French medication database
-    const pageUrl = `https://base-donnees-publique.medicaments.gouv.fr/medicament/${cis}/extrait#tab-rcp`;
+    const pageUrl = `https://base-donnees-publique.medicaments.gouv.fr/medicament/${cis}/extrait#tab-notice`;
     console.log("Fetching notice from:", pageUrl);
 
     const pageResponse = await fetch(pageUrl, {
