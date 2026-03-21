@@ -32,11 +32,12 @@ Deno.serve(async (req) => {
 Génère un rapport clair, structuré et professionnel en français, destiné à être partagé avec un médecin.
 
 Le rapport doit contenir :
-1. **Résumé global** : taux d'observance (prises confirmées vs total), tendance générale des ressentis
-2. **Tendances détectées** : effets indésirables récurrents, amélioration progressive ou détérioration, patterns remarquables
-3. **Détail par prise** : pour chaque prise, date, statut, et ressentis associés
+1. Résumé global : taux d'observance (prises confirmées vs total), tendance générale des ressentis
+2. Tendances détectées : effets indésirables récurrents, amélioration progressive ou détérioration, patterns remarquables
+3. Détail par prise : pour chaque prise, date, statut, et ressentis associés
 
-Utilise le format Markdown. Sois précis et factuel. Ne fais pas de diagnostic.`;
+IMPORTANT : N'utilise JAMAIS de mise en forme markdown. Pas de gras (**texte**), pas d'italique (*texte*), pas d'astérisques, pas de titres (#), pas de listes à puces avec des tirets. Écris uniquement du texte brut simple et lisible, avec des retours à la ligne pour structurer.
+Sois précis et factuel. Ne fais pas de diagnostic.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
