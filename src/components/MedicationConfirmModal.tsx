@@ -78,8 +78,8 @@ export function MedicationConfirmModal({ open, prenom, medicamentNom, medicament
 
         {/* Medication info */}
         <div className="text-center">
-          <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight">Doliprane 1000</h2>
-          <p className="mt-2 text-sm text-white/50">1 comprimé · avec le repas</p>
+          <h2 className="text-[1.7rem] font-bold leading-tight tracking-tight">{medicamentNom || "Médicament"}</h2>
+          <p className="mt-2 text-sm text-white/50">{medicamentDosage || ""}</p>
         </div>
 
         {/* Slide to confirm */}
