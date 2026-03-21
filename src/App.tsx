@@ -41,7 +41,6 @@ const App = () => (
           <RightSidebar />
         </BrowserRouter>
         <GlobalConfirmModal />
-        </BrowserRouter>
       </ProfileNotificationProvider>
     </TooltipProvider>
   </QueryClientProvider>
