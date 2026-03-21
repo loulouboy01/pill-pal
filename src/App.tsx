@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomTabBar } from "@/components/BottomTabBar";
+import { RightSidebar } from "@/components/RightSidebar";
+import { ProfileNotificationProvider } from "@/contexts/ProfileNotificationContext";
 import Index from "./pages/Index";
 import AjouterPage from "./pages/AjouterPage";
 import ScannerPage from "./pages/ScannerPage";
@@ -19,22 +21,25 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/ajouter" element={<AjouterPage />} />
-          <Route path="/scanner" element={<ScannerPage />} />
-          <Route path="/medicament/:id" element={<DetailPage />} />
-          <Route path="/medicament/:id/modifier" element={<ModifierPage />} />
-          <Route path="/consultations" element={<ConsultationsPage />} />
-          <Route path="/consultations/nouvelle" element={<NouvelleConsultationPage />} />
-          <Route path="/consultations/:id" element={<ConsultationDetailPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <BottomTabBar />
-      </BrowserRouter>
+      <ProfileNotificationProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/ajouter" element={<AjouterPage />} />
+            <Route path="/scanner" element={<ScannerPage />} />
+            <Route path="/medicament/:id" element={<DetailPage />} />
+            <Route path="/medicament/:id/modifier" element={<ModifierPage />} />
+            <Route path="/consultations" element={<ConsultationsPage />} />
+            <Route path="/consultations/nouvelle" element={<NouvelleConsultationPage />} />
+            <Route path="/consultations/:id" element={<ConsultationDetailPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomTabBar />
+          <RightSidebar />
+        </BrowserRouter>
+      </ProfileNotificationProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

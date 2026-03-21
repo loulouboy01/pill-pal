@@ -5,10 +5,12 @@ import { Medicament } from "@/types/medicament";
 import { MedicamentCard } from "@/components/MedicamentCard";
 import { Plus, ScanLine, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
 
 export default function Index() {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const navigate = useNavigate();
+  const { profile } = useProfileNotification();
 
   useEffect(() => {
     setMedicaments(getMedicaments());
@@ -23,7 +25,7 @@ export default function Index() {
         <div className="mx-auto flex max-w-lg items-center justify-between px-5 py-4">
           <div>
             <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
-              Mes traitements
+              {profile.prenom ? `Bonjour, ${profile.prenom}` : "Bonjour"}
             </h1>
             {!isEmpty && (
               <p className="mt-0.5 text-sm text-muted-foreground">
