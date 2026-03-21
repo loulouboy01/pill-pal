@@ -1,6 +1,5 @@
 import { Medicament, pluralizeUnite } from "@/types/medicament";
 import { useNavigate } from "react-router-dom";
-import { Pill } from "lucide-react";
 
 interface MedicamentCardProps {
   medicament: Medicament;
