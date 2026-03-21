@@ -174,7 +174,7 @@ export default function Index() {
               Aucun médicament enregistré
             </h2>
             <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Ajoutez vos médicaments dans l'onglet dédié pour voir votre tableau de bord quotidien.
+              Ajoutez vos médicaments dans l'onglet Médicaments pour voir votre tableau de bord quotidien.
             </p>
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
               <Button
