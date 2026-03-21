@@ -10,6 +10,7 @@ import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
 export default function Index() {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const navigate = useNavigate();
+  const { profile } = useProfileNotification();
 
   useEffect(() => {
     setMedicaments(getMedicaments());
