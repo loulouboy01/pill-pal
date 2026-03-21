@@ -35,29 +35,7 @@ export async function getNotice(cis: string): Promise<NoticeInfo> {
   return data?.notice;
 }
 
-export async function transcribeAudio(audioBlob: Blob): Promise<string> {
-  const formData = new FormData();
-  formData.append("audio", audioBlob, "audio.webm");
-
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-  const response = await fetch(
-    `https://${projectId}.supabase.co/functions/v1/transcribe-audio`,
-    {
-      method: "POST",
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-      },
-      body: formData,
-    }
-  );
-
-  if (!response.ok) throw new Error("Erreur lors de la transcription");
-  const data = await response.json();
-  return data?.text ?? "";
-}
+// transcribeAudio removed — now handled by useTranscription hook with AssemblyAI
 
 export async function generateConsultationReport(transcription: string): Promise<any> {
   const { data, error } = await supabase.functions.invoke("generate-consultation-report", {

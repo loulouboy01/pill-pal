@@ -1,106 +1,43 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { transcribeAudio, generateConsultationReport } from "@/lib/api";
-import { saveConsultation, updateConsultation } from "@/lib/consultations-storage";
+import { generateConsultationReport } from "@/lib/api";
+import { saveConsultation } from "@/lib/consultations-storage";
 import { Consultation, CompteRendu } from "@/types/consultation";
 import { CompteRenduView } from "@/components/CompteRenduView";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Mic, MicOff, Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { useTranscription } from "@/hooks/useTranscription";
+import { formatTranscript, getUniqueSpeakers, getSpeakerColor } from "@/lib/transcription-utils";
 
 export default function NouvelleConsultationPage() {
   const navigate = useNavigate();
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState("");
-  const [duration, setDuration] = useState(0);
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const {
+    status,
+    statusMessage,
+    result,
+    error: transcriptionError,
+    isRecording,
+    duration,
+    startRecording: startRec,
+    stopRecording: stopRec,
+  } = useTranscription({ language: "fr" });
 
-  const sendChunk = useCallback(async (blob: Blob) => {
-    if (blob.size < 100) return;
+  const transcriptionText = result?.text || "";
+
+  const handleStartRecording = useCallback(async () => {
     try {
-      const text = await transcribeAudio(blob);
-      if (text) {
-        setTranscription(text);
-      }
+      await startRec();
     } catch {
-      console.error("Erreur de transcription d'un chunk");
+      toast.error("Impossible d'accéder au microphone");
     }
-  }, []);
+  }, [startRec]);
 
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
-      });
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.start(500); // Collect data every 500ms
-      setIsRecording(true);
-      setDuration(0);
-
-      // Timer
-      timerRef.current = setInterval(() => {
-        setDuration((d) => d + 1);
-      }, 1000);
-
-      // Send full recording every 15 seconds (must include WebM header from start)
-      let lastSentLength = 0;
-      intervalRef.current = setInterval(() => {
-        if (chunksRef.current.length > lastSentLength) {
-          const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
-          lastSentLength = chunksRef.current.length;
-          sendChunk(blob);
-        }
-      }, 15000);
-    } catch (err: any) {
-      if (err.name === "NotAllowedError") {
-        toast.error("Accès au microphone refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.");
-      } else {
-        toast.error("Impossible d'accéder au microphone");
-      }
-    }
-  }, [sendChunk]);
-
-  const stopRecording = useCallback(async () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      recorder.stop();
-    }
-
-    // Send final full recording
-    if (chunksRef.current.length > 0) {
-      const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
-      await sendChunk(blob);
-      chunksRef.current = [];
-    }
-
-    // Stop stream
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-
-    setIsRecording(false);
-
-    // Save consultation
+  const handleStopRecording = useCallback(async () => {
+    await stopRec();
     const newConsultation: Consultation = {
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
@@ -109,29 +46,20 @@ export default function NouvelleConsultationPage() {
       statut: "transcrit",
     };
     setConsultation(newConsultation);
-  }, [sendChunk]);
-
-  // Keep consultation transcription in sync
-  useEffect(() => {
-    if (consultation) {
-      setConsultation((prev) =>
-        prev ? { ...prev, transcription } : prev
-      );
-    }
-  }, [transcription]);
+  }, [stopRec]);
 
   const handleGenerateReport = useCallback(async () => {
-    if (!consultation || !transcription.trim()) {
+    if (!consultation || !transcriptionText.trim()) {
       toast.error("Aucune transcription à analyser");
       return;
     }
 
     setGeneratingReport(true);
-    const updated = { ...consultation, transcription, statut: "analyse" as const };
+    const updated = { ...consultation, transcription: transcriptionText, statut: "analyse" as const };
     setConsultation(updated);
 
     try {
-      const compteRendu: CompteRendu = await generateConsultationReport(transcription);
+      const compteRendu: CompteRendu = await generateConsultationReport(transcriptionText);
       const final: Consultation = {
         ...updated,
         compteRendu,
@@ -146,13 +74,15 @@ export default function NouvelleConsultationPage() {
     } finally {
       setGeneratingReport(false);
     }
-  }, [consultation, transcription]);
+  }, [consultation, transcriptionText]);
 
   const formatDuration = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
+
+  const isProcessing = status === "uploading" || status === "transcribing";
 
   return (
     <div className="min-h-screen bg-background">
@@ -205,8 +135,9 @@ export default function NouvelleConsultationPage() {
                 <div className="absolute inset-0 animate-ping rounded-full bg-destructive/20" />
               )}
               <button
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`relative flex h-24 w-24 items-center justify-center rounded-full transition-all active:scale-95 ${
+                onClick={isRecording ? handleStopRecording : handleStartRecording}
+                disabled={isProcessing}
+                className={`relative flex h-24 w-24 items-center justify-center rounded-full transition-all active:scale-95 disabled:opacity-50 ${
                   isRecording
                     ? "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30"
                     : "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
@@ -225,12 +156,11 @@ export default function NouvelleConsultationPage() {
               {isRecording && (
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
               )}
+              {isProcessing && (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              )}
               <span className="text-sm font-medium text-muted-foreground">
-                {isRecording
-                  ? "Enregistrement en cours..."
-                  : consultation
-                  ? "Enregistrement terminé"
-                  : "Appuyez pour enregistrer"}
+                {statusMessage || (consultation ? "Enregistrement terminé" : "Appuyez pour enregistrer")}
               </span>
             </div>
 
@@ -241,22 +171,58 @@ export default function NouvelleConsultationPage() {
               </span>
             )}
 
-            {/* Transcription */}
-            {transcription && (
+            {/* Error */}
+            {transcriptionError && (
+              <div className="mt-4 w-full rounded-xl bg-destructive/10 p-3 text-center text-sm text-destructive">
+                {transcriptionError}
+              </div>
+            )}
+
+            {/* Transcription with diarization */}
+            {result?.utterances && result.utterances.length > 0 && (
+              <div className="mt-8 w-full rounded-2xl border bg-card p-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Transcription — {getUniqueSpeakers(result.utterances).length} locuteur(s)
+                </p>
+                <div className="max-h-60 space-y-3 overflow-y-auto">
+                  {result.utterances.map((utterance, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div
+                        className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                        style={{ backgroundColor: getSpeakerColor(utterance.speaker) }}
+                      >
+                        {utterance.speaker}
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Locuteur {utterance.speaker}
+                        </span>
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {utterance.text}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fallback: plain text if no utterances */}
+            {result?.text && (!result.utterances || result.utterances.length === 0) && (
               <div className="mt-8 w-full rounded-2xl border bg-card p-4">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Transcription
                 </p>
                 <div className="max-h-60 overflow-y-auto">
                   <p className="text-sm leading-relaxed text-foreground">
-                    {transcription}
+                    {result.text}
                   </p>
                 </div>
               </div>
             )}
 
             {/* Generate report button */}
-            {consultation && !isRecording && transcription.trim() && (
+            {consultation && !isRecording && !isProcessing && transcriptionText.trim() && (
               <Button
                 onClick={handleGenerateReport}
                 className="mt-8 h-12 w-full rounded-2xl text-sm font-medium"
