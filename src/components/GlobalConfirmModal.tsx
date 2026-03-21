@@ -52,10 +52,14 @@ export function GlobalConfirmModal() {
     );
   }
 
+  const pendingNotif = notifications.find((n) => n.status === "pending");
+
   return (
     <MedicationConfirmModal
       open={showConfirmModal}
       prenom={profile.prenom}
+      medicamentNom={pendingNotif?.medicament}
+      medicamentDosage={pendingNotif ? `${pendingNotif.dosage} · ${pendingNotif.forme}` : undefined}
       onConfirm={handleConfirm}
       onPostpone={handlePostpone}
       onClose={() => setShowConfirmModal(false)}
