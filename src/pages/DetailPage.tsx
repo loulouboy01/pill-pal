@@ -6,6 +6,7 @@ import { Medicament } from "@/types/medicament";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Trash2, Pencil, Pill, Calendar, Clock, Hash, FileText, AlertTriangle, Loader2 } from "lucide-react";
+import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
 import { toast } from "sonner";
 import {
   AlertDialog,
