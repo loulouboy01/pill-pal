@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMedicamentById, deleteMedicament } from "@/lib/medicaments-storage";
 import { Medicament, pluralizeUnite } from "@/types/medicament";
+import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
 import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
+import { MedicationHistoryTab } from "@/components/MedicationHistoryTab";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle, History } from "lucide-react";
 import { toast } from "sonner";
 
 interface NoticeInfo {
@@ -33,6 +35,7 @@ const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Pill }[
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { notifications } = useProfileNotification();
   const [med, setMed] = useState<Medicament | null>(null);
   const [notice, setNotice] = useState<NoticeInfo | null>(null);
   const [noticeLoading, setNoticeLoading] = useState(false);
@@ -74,6 +77,11 @@ export default function DetailPage() {
 
   const posologie = Array.isArray(med.posologie) ? med.posologie : [];
 
+  // Filter notifications for this medication
+  const medHistory = notifications
+    .filter((n) => n.medicament === med.nom || n.medicament === `${med.nom} ${med.dosage}`.trim())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md">
@@ -111,16 +119,18 @@ export default function DetailPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="infos" onValueChange={(v) => v === "notice" && handleFetchNotice()}>
-          <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1 h-11">
-            <TabsTrigger value="infos" className="rounded-xl text-sm font-medium">Informations</TabsTrigger>
-            <TabsTrigger value="notice" className="rounded-xl text-sm font-medium" disabled={!med.codeCIS}>
-              <FileText className="mr-1.5 h-3.5 w-3.5" />Notice
+          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-muted p-1 h-11">
+            <TabsTrigger value="infos" className="rounded-xl text-xs font-medium">Informations</TabsTrigger>
+            <TabsTrigger value="notice" className="rounded-xl text-xs font-medium" disabled={!med.codeCIS}>
+              <FileText className="mr-1 h-3 w-3" />Notice
+            </TabsTrigger>
+            <TabsTrigger value="historique" className="rounded-xl text-xs font-medium">
+              <History className="mr-1 h-3 w-3" />Historique
             </TabsTrigger>
           </TabsList>
 
           {/* Tab: Infos */}
           <TabsContent value="infos" className="space-y-6 mt-4">
-            {/* Posologie */}
             <div className="rounded-2xl bg-card p-5 shadow-sm space-y-3">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
@@ -145,7 +155,6 @@ export default function DetailPage() {
               )}
             </div>
 
-            {/* Info */}
             <div className="rounded-2xl bg-card p-5 shadow-sm space-y-4">
               <div className="flex items-start gap-3">
                 <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
@@ -172,7 +181,6 @@ export default function DetailPage() {
               </div>
             </div>
 
-            {/* Delete */}
             <Button variant="destructive" className="w-full rounded-2xl h-11" onClick={handleDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Supprimer ce médicament
@@ -209,7 +217,6 @@ export default function DetailPage() {
                 })}
               </div>
             )}
-            {/* Link to official page */}
             {med.codeCIS && (
               <a
                 href={`https://base-donnees-publique.medicaments.gouv.fr/medicament/${med.codeCIS}/extrait#tab-rcp`}
@@ -221,6 +228,14 @@ export default function DetailPage() {
                 Consulter la notice complète sur la Base de données du médicament
               </a>
             )}
+          </TabsContent>
+
+          {/* Tab: Historique */}
+          <TabsContent value="historique" className="mt-4">
+            <MedicationHistoryTab
+              medicamentName={med.nom}
+              entries={medHistory}
+            />
           </TabsContent>
         </Tabs>
       </main>

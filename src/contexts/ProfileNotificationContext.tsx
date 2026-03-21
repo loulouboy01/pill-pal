@@ -7,6 +7,12 @@ export interface UserProfile {
   genre: "homme" | "femme" | "autre" | "";
 }
 
+export interface Ressenti {
+  amelioration: string;
+  effetsIndesirables: string;
+  etatGlobal: "bien" | "moyen" | "mal" | "";
+}
+
 export interface NotificationEntry {
   id: string;
   timestamp: Date;
@@ -14,6 +20,7 @@ export interface NotificationEntry {
   medicament: string;
   dosage: string;
   forme: string;
+  ressenti?: Ressenti;
 }
 
 interface ContextValue {
@@ -22,6 +29,7 @@ interface ContextValue {
   notifications: NotificationEntry[];
   addNotification: (n: Omit<NotificationEntry, "id">) => void;
   updateNotificationStatus: (id: string, status: NotificationEntry["status"]) => void;
+  updateNotificationRessenti: (id: string, ressenti: Ressenti) => void;
   showConfirmModal: boolean;
   setShowConfirmModal: (v: boolean) => void;
   onClosePanel?: () => void;
@@ -75,8 +83,12 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, status } : n)));
   }, []);
 
+  const updateNotificationRessenti = useCallback((id: string, ressenti: Ressenti) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, ressenti } : n)));
+  }, []);
+
   return (
-    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal, onClosePanel, setOnClosePanel }}>
+    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, updateNotificationRessenti, showConfirmModal, setShowConfirmModal, onClosePanel, setOnClosePanel }}>
       {children}
     </ProfileNotificationContext.Provider>
   );
