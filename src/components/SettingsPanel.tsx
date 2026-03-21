@@ -18,7 +18,7 @@ export function SettingsPanel() {
     setTimeout(() => {
       toast(title, {
         description: "Cliquez pour indiquer que vous avez pris votre médicament",
-        duration: 10000,
+        duration: 5000,
         action: {
           label: "Ouvrir",
           onClick: () => setShowConfirmModal(true),
