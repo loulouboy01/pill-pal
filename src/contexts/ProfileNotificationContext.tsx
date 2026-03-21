@@ -24,6 +24,8 @@ interface ContextValue {
   updateNotificationStatus: (id: string, status: NotificationEntry["status"]) => void;
   showConfirmModal: boolean;
   setShowConfirmModal: (v: boolean) => void;
+  onClosePanel?: () => void;
+  setOnClosePanel: (fn: (() => void) | undefined) => void;
 }
 
 const ProfileNotificationContext = createContext<ContextValue | null>(null);
