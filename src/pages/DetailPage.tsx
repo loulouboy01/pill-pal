@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMedicamentById, deleteMedicament } from "@/lib/medicaments-storage";
 import { Medicament, pluralizeUnite } from "@/types/medicament";
-import { ExpliqueMoiButton } from "@/components/ExpliqueMoiButton";
+import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle } from "lucide-react";
