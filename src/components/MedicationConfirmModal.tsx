@@ -12,7 +12,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function MedicationConfirmModal({ open, prenom, onConfirm, onPostpone, onClose }: Props) {
+export function MedicationConfirmModal({ open, prenom, medicamentNom, medicamentDosage, onConfirm, onPostpone, onClose }: Props) {
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
