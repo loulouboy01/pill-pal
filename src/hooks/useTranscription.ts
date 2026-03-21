@@ -47,7 +47,7 @@ export function useTranscription(options?: {
   language?: string;
   speakersExpected?: number;
 }) {
-  const { language = "fr", speakersExpected } = options || {};
+  const { language = "fr" } = options || {};
 
   const [status, setStatus] = useState<TranscriptionStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
@@ -63,78 +63,39 @@ export function useTranscription(options?: {
 
   const processAudio = useCallback(async (audioBlob: Blob) => {
     try {
-      setStatus("uploading");
-      setStatusMessage("Envoi de l'audio...");
+      setStatus("transcribing");
+      setStatusMessage("Transcription en cours avec Whisper...");
 
       const base64 = await blobToBase64(audioBlob);
 
-      const { data: uploadData, error: uploadError } =
+      const { data, error: fnError } =
         await supabase.functions.invoke("transcribe-audio", {
-          body: { action: "upload", audioData: base64 },
+          body: { action: "transcribe", audioData: base64, language },
         });
 
-      if (uploadError || !uploadData?.upload_url) {
-        throw new Error(uploadError?.message || "Upload failed");
+      if (fnError) {
+        throw new Error(fnError.message || "Transcription failed");
       }
 
-      setStatus("transcribing");
-      setStatusMessage("Transcription en cours...");
-
-      const { data: transcribeData, error: transcribeError } =
-        await supabase.functions.invoke("transcribe-audio", {
-          body: {
-            action: "transcribe",
-            audioUrl: uploadData.upload_url,
-            language,
-            speakersExpected,
-          },
+      if (data?.status === "completed") {
+        setResult({
+          text: data.text,
+          utterances: data.utterances || [],
+          audioDuration: data.audio_duration || 0,
         });
-
-      if (transcribeError || !transcribeData?.id) {
-        throw new Error(transcribeError?.message || "Transcription start failed");
+        setStatus("completed");
+        setStatusMessage("Transcription terminée !");
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        throw new Error("Réponse inattendue du serveur");
       }
-
-      const transcriptId = transcribeData.id;
-      let attempts = 0;
-      const maxAttempts = 200;
-
-      while (attempts < maxAttempts) {
-        const { data: pollData, error: pollError } =
-          await supabase.functions.invoke("transcribe-audio", {
-            body: { action: "poll", transcriptId },
-          });
-
-        if (pollError) throw new Error(pollError.message);
-
-        if (pollData.status === "completed") {
-          setResult({
-            text: pollData.text,
-            utterances: pollData.utterances || [],
-            audioDuration: pollData.audio_duration || 0,
-          });
-          setStatus("completed");
-          setStatusMessage("Transcription terminée !");
-          return;
-        }
-
-        if (pollData.status === "error") {
-          throw new Error(pollData.error || "Transcription error");
-        }
-
-        attempts++;
-        setStatusMessage(
-          `Transcription en cours... ${Math.round((attempts * 3) / 60)} min`
-        );
-        await new Promise((r) => setTimeout(r, 3000));
-      }
-
-      throw new Error("Délai d'attente dépassé");
     } catch (err: any) {
       setError(err.message);
       setStatus("error");
       setStatusMessage("");
     }
-  }, [language, speakersExpected]);
+  }, [language]);
 
   const startRecording = useCallback(async () => {
     try {
