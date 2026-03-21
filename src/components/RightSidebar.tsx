@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Bell, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -17,8 +17,15 @@ const icons = [
 
 export function RightSidebar() {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
-  const { notifications } = useProfileNotification();
+  const { notifications, setOnClosePanel } = useProfileNotification();
   const pendingCount = notifications.filter((n) => n.status === "pending").length;
+
+  const closePanel = useCallback(() => setActivePanel(null), []);
+
+  useEffect(() => {
+    setOnClosePanel(closePanel);
+    return () => setOnClosePanel(undefined);
+  }, [closePanel, setOnClosePanel]);
 
   const handleClick = (panel: PanelType) => {
     setActivePanel((prev) => (prev === panel ? null : panel));

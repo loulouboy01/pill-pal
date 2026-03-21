@@ -24,6 +24,8 @@ interface ContextValue {
   updateNotificationStatus: (id: string, status: NotificationEntry["status"]) => void;
   showConfirmModal: boolean;
   setShowConfirmModal: (v: boolean) => void;
+  onClosePanel?: () => void;
+  setOnClosePanel: (fn: (() => void) | undefined) => void;
 }
 
 const ProfileNotificationContext = createContext<ContextValue | null>(null);
@@ -53,6 +55,8 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
   const [profile, setProfileState] = useState<UserProfile>(loadProfile);
   const [notifications, setNotifications] = useState<NotificationEntry[]>(loadNotifications);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [onClosePanel, setOnClosePanelState] = useState<(() => void) | undefined>(undefined);
+  const setOnClosePanel = useCallback((fn: (() => void) | undefined) => setOnClosePanelState(() => fn), []);
 
   const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
@@ -72,7 +76,7 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
   }, []);
 
   return (
-    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal }}>
+    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal, onClosePanel, setOnClosePanel }}>
       {children}
     </ProfileNotificationContext.Provider>
   );
