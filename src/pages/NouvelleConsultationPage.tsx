@@ -60,11 +60,12 @@ export default function NouvelleConsultationPage() {
         setDuration((d) => d + 1);
       }, 1000);
 
-      // Send chunks every 15 seconds
+      // Send full recording every 15 seconds (must include WebM header from start)
+      let lastSentLength = 0;
       intervalRef.current = setInterval(() => {
-        if (chunksRef.current.length > 0) {
+        if (chunksRef.current.length > lastSentLength) {
           const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
-          chunksRef.current = [];
+          lastSentLength = chunksRef.current.length;
           sendChunk(blob);
         }
       }, 15000);
