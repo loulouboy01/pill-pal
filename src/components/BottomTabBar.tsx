@@ -13,13 +13,16 @@ export function BottomTabBar() {
   const navigate = useNavigate();
 
   const activeTab = tabs.find((t) => {
-    if (t.path === "/") {
+    if (t.path === "/medicaments") {
       return (
-        location.pathname === "/" ||
+        location.pathname === "/medicaments" ||
         location.pathname.startsWith("/ajouter") ||
         location.pathname.startsWith("/scanner") ||
         location.pathname.startsWith("/medicament")
       );
+    }
+    if (t.path === "/") {
+      return location.pathname === "/";
     }
     return location.pathname.startsWith(t.path);
   });
