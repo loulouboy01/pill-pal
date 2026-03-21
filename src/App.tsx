@@ -40,6 +40,8 @@ const App = () => (
           <BottomTabBar />
           <RightSidebar />
         </BrowserRouter>
+        <GlobalConfirmModal />
+        </BrowserRouter>
       </ProfileNotificationProvider>
     </TooltipProvider>
   </QueryClientProvider>
