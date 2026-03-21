@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         audio_url: audioUrl,
         speaker_labels: true,
         language_code: language || "fr",
-        speech_model: "universal-2",
+        speech_model: "universal-3-pro",
       };
 
       if (speakersExpected && speakersExpected > 0) {
