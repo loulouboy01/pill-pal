@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMedicaments } from "@/lib/medicaments-storage";
 import { Medicament, pluralizeUnite } from "@/types/medicament";
-import { Plus, ScanLine, Pill, Check } from "lucide-react";
+import { Pill, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
