@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Pill, Stethoscope } from "lucide-react";
+import { Home, Pill, Stethoscope } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { path: "/", label: "Médicaments", icon: Pill },
+  { path: "/", label: "Accueil", icon: Home },
+  { path: "/medicaments", label: "Médicaments", icon: Pill },
   { path: "/consultations", label: "Consultations", icon: Stethoscope },
 ];
 
