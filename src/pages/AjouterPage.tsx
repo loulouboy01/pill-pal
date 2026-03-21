@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { saveMedicament } from "@/lib/medicaments-storage";
-import { Medicament, MedicamentSearchResult, Posologie } from "@/types/medicament";
+import { Medicament, MedicamentSearchResult, Posologie, createEmptyPrise } from "@/types/medicament";
 import { MedicamentSearchInput } from "@/components/MedicamentSearchInput";
-import { PosologieStepper } from "@/components/PosologieStepper";
+import { PosologiePrises } from "@/components/PosologiePrises";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -24,14 +24,15 @@ export default function AjouterPage({ initialData, onSave, title = "Ajouter un m
   const [forme, setForme] = useState(initialData?.forme ?? "");
   const [codeCIS, setCodeCIS] = useState<string | null>(initialData?.codeCIS ?? null);
   const [posologie, setPosologie] = useState<Posologie>(
-    initialData?.posologie ?? { matin: 0, midi: 0, soir: 0, coucher: 0 }
+    initialData?.posologie && initialData.posologie.length > 0
+      ? initialData.posologie
+      : [createEmptyPrise()]
   );
   const [dureeTraitement, setDureeTraitement] = useState(initialData?.dureeTraitement ?? "");
 
   function handleSelectMedicament(result: MedicamentSearchResult) {
     setNom(result.denomination);
     setCodeCIS(result.cis);
-    // Try to extract dosage and forme from denomination
     setForme(result.forme || "");
   }
 
@@ -77,58 +78,29 @@ export default function AjouterPage({ initialData, onSave, title = "Ajouter un m
       </header>
 
       <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-6 px-5 pb-12 pt-2">
-        {/* Nom */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Nom du médicament</Label>
-          <MedicamentSearchInput
-            value={nom}
-            onChange={setNom}
-            onSelect={handleSelectMedicament}
-          />
+          <MedicamentSearchInput value={nom} onChange={setNom} onSelect={handleSelectMedicament} />
         </div>
 
-        {/* Dosage */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Dosage</Label>
-          <Input
-            value={dosage}
-            onChange={(e) => setDosage(e.target.value)}
-            placeholder="Ex: 1000mg"
-            className="rounded-xl bg-card"
-          />
+          <Input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="Ex: 1000mg" className="rounded-xl bg-card" />
         </div>
 
-        {/* Forme */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Forme</Label>
-          <Input
-            value={forme}
-            onChange={(e) => setForme(e.target.value)}
-            placeholder="Ex: comprimé, gélule, sirop"
-            className="rounded-xl bg-card"
-          />
+          <Input value={forme} onChange={(e) => setForme(e.target.value)} placeholder="Ex: comprimé, gélule, sirop" className="rounded-xl bg-card" />
         </div>
 
-        {/* Posologie */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Posologie</Label>
-          <div className="space-y-2">
-            <PosologieStepper label="Matin" value={posologie.matin} onChange={(v) => setPosologie({ ...posologie, matin: v })} />
-            <PosologieStepper label="Midi" value={posologie.midi} onChange={(v) => setPosologie({ ...posologie, midi: v })} />
-            <PosologieStepper label="Soir" value={posologie.soir} onChange={(v) => setPosologie({ ...posologie, soir: v })} />
-            <PosologieStepper label="Coucher" value={posologie.coucher} onChange={(v) => setPosologie({ ...posologie, coucher: v })} />
-          </div>
+          <PosologiePrises value={posologie} onChange={setPosologie} />
         </div>
 
-        {/* Durée */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Durée du traitement</Label>
-          <Input
-            value={dureeTraitement}
-            onChange={(e) => setDureeTraitement(e.target.value)}
-            placeholder="Ex: 7 jours, 1 mois, continu"
-            className="rounded-xl bg-card"
-          />
+          <Input value={dureeTraitement} onChange={(e) => setDureeTraitement(e.target.value)} placeholder="Ex: 7 jours, 1 mois, continu" className="rounded-xl bg-card" />
         </div>
 
         <Button type="submit" className="h-12 w-full rounded-2xl text-sm font-medium">
