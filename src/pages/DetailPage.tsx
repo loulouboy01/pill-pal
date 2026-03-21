@@ -1,33 +1,33 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMedicamentById, deleteMedicament } from "@/lib/medicaments-storage";
-import { getNotice, NoticeInfo } from "@/lib/api";
-import { Medicament } from "@/types/medicament";
+import { Medicament, pluralizeUnite } from "@/types/medicament";
+import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Trash2, Pencil, Pill, Calendar, Clock, Hash, FileText, AlertTriangle, Loader2 } from "lucide-react";
-import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
+import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
+interface NoticeInfo {
+  posologie: string;
+  modeAdministration: string;
+  momentPrise: string;
+  contreIndications: string;
+  effetsIndesirables: string;
+  precautions: string;
+  interactions: string;
+  conservation: string;
+}
 
 const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Pill }[] = [
   { key: "posologie", label: "Posologie recommandée", icon: Clock },
   { key: "modeAdministration", label: "Mode et voie d'administration", icon: Pill },
   { key: "momentPrise", label: "Moment de prise", icon: Calendar },
-  { key: "delaiMinimumEntrePrises", label: "Délai minimum entre 2 prises", icon: Clock },
-  { key: "dureeMaxTraitement", label: "Durée maximale de traitement", icon: Calendar },
-  { key: "contreIndications", label: "Contre-indications", icon: AlertTriangle },
-  { key: "effetsIndesirables", label: "Effets indésirables", icon: AlertTriangle },
+  { key: "contreIndications", label: "Contre-indications", icon: AlertCircle },
+  { key: "effetsIndesirables", label: "Effets indésirables", icon: AlertCircle },
+  { key: "precautions", label: "Précautions d'emploi", icon: AlertCircle },
+  { key: "interactions", label: "Interactions", icon: AlertCircle },
+  { key: "conservation", label: "Conservation", icon: AlertCircle },
 ];
 
 export default function DetailPage() {
@@ -48,17 +48,19 @@ export default function DetailPage() {
   }, [id, navigate]);
 
   function handleFetchNotice() {
-    if (!med?.codeCIS || noticeFetched) return;
+    if (noticeFetched || !med?.codeCIS) return;
+    setNoticeFetched(true);
     setNoticeLoading(true);
     setNoticeError(null);
-    setNoticeFetched(true);
 
-    getNotice(med.codeCIS)
-      .then((data) => setNotice(data))
-      .catch((err) => {
-        console.error(err);
-        setNoticeError("Impossible de charger la notice. Réessayez plus tard.");
-      })
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-notice`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+      body: JSON.stringify({ cis: med.codeCIS }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.notice) setNotice(data.notice); else setNoticeError("Notice non trouvée"); })
+      .catch(() => { setNoticeError("Impossible de charger la notice. Réessayez plus tard."); })
       .finally(() => setNoticeLoading(false));
   }
 
@@ -70,32 +72,19 @@ export default function DetailPage() {
     navigate("/");
   }
 
-  const posLabels = [
-    { key: "matin" as const, label: "Matin" },
-    { key: "midi" as const, label: "Midi" },
-    { key: "soir" as const, label: "Soir" },
-    { key: "coucher" as const, label: "Coucher" },
-  ];
+  const posologie = Array.isArray(med.posologie) ? med.posologie : [];
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/")}
-              className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-accent active:scale-95"
-            >
+            <button onClick={() => navigate("/")} className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-accent active:scale-95">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-lg font-semibold text-foreground">Détail</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(`/medicament/${med.id}/modifier`)}
-            className="rounded-xl"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/medicament/${med.id}/modifier`)} className="rounded-xl">
             <Pencil className="h-4 w-4" />
           </Button>
         </div>
@@ -118,16 +107,9 @@ export default function DetailPage() {
         {/* Tabs */}
         <Tabs defaultValue="infos" onValueChange={(v) => v === "notice" && handleFetchNotice()}>
           <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1 h-11">
-            <TabsTrigger value="infos" className="rounded-xl text-sm font-medium">
-              Informations
-            </TabsTrigger>
-            <TabsTrigger
-              value="notice"
-              className="rounded-xl text-sm font-medium"
-              disabled={!med.codeCIS}
-            >
-              <FileText className="mr-1.5 h-3.5 w-3.5" />
-              Notice
+            <TabsTrigger value="infos" className="rounded-xl text-sm font-medium">Informations</TabsTrigger>
+            <TabsTrigger value="notice" className="rounded-xl text-sm font-medium" disabled={!med.codeCIS}>
+              <FileText className="mr-1.5 h-3.5 w-3.5" />Notice
             </TabsTrigger>
           </TabsList>
 
@@ -139,16 +121,23 @@ export default function DetailPage() {
                 <Clock className="h-4 w-4 text-primary" />
                 Posologie
               </h3>
-              <div className="grid grid-cols-4 gap-2">
-                {posLabels.map(({ key, label }) => (
-                  <div key={key} className="flex flex-col items-center rounded-xl bg-background p-3">
-                    <span className="text-xs text-muted-foreground">{label}</span>
-                    <span className="mt-1 text-xl font-semibold tabular-nums text-foreground">
-                      {med.posologie[key]}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {posologie.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune prise définie</p>
+              ) : (
+                <div className="space-y-2">
+                  {posologie.map((prise, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-xl bg-background p-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">{prise.moment || "Non précisé"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {prise.quantite} {pluralizeUnite(prise.unite, prise.quantite)}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium tabular-nums text-primary">{prise.heureNotification}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Info */}
@@ -170,107 +159,67 @@ export default function DetailPage() {
               <div className="flex items-start gap-3">
                 <Calendar className="mt-0.5 h-4 w-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Ajouté le</p>
+                  <p className="text-xs text-muted-foreground">Date d'ajout</p>
                   <p className="text-sm font-medium text-foreground">
-                    {new Date(med.dateAjout).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {new Date(med.dateAjout).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Chatbot */}
+            {/* Explique-moi button */}
             {med.codeCIS && (
               <ExpliqueMoiButton cis={med.codeCIS} nomMedicament={med.nom} />
             )}
 
             {/* Delete */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-12 w-full rounded-2xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer ce médicament
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer ce médicament ?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est irréversible. Le médicament sera supprimé de votre liste.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Supprimer
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button variant="destructive" className="w-full rounded-2xl h-11" onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer ce médicament
+            </Button>
           </TabsContent>
 
           {/* Tab: Notice */}
-          <TabsContent value="notice" className="mt-4">
-            {!med.codeCIS && (
-              <div className="rounded-2xl bg-card p-6 shadow-sm text-center">
-                <p className="text-sm text-muted-foreground">
-                  Aucun code CIS associé à ce médicament. La notice n'est pas disponible.
-                </p>
-              </div>
-            )}
-
+          <TabsContent value="notice" className="space-y-4 mt-4">
             {noticeLoading && (
-              <div className="rounded-2xl bg-card p-8 shadow-sm flex flex-col items-center gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Chargement de la notice…</p>
+              <div className="flex flex-col items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-3 text-sm text-muted-foreground">Chargement de la notice…</p>
               </div>
             )}
-
             {noticeError && (
-              <div className="rounded-2xl bg-destructive/5 border border-destructive/20 p-5 space-y-3">
-                <p className="text-sm text-destructive font-medium">{noticeError}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  onClick={() => { setNoticeFetched(false); handleFetchNotice(); }}
-                >
-                  Réessayer
-                </Button>
+              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {noticeError}
               </div>
             )}
-
             {notice && (
-              <div className="space-y-3">
-                {noticeFields.map(({ key, label, icon: Icon }) => (
-                  <div key={key} className="rounded-2xl bg-card p-4 shadow-sm space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-primary shrink-0" />
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        {label}
+              <div className="space-y-4">
+                {noticeFields.map(({ key, label, icon: Icon }) => {
+                  const value = notice[key];
+                  if (!value) return null;
+                  return (
+                    <div key={key} className="rounded-2xl bg-card p-4 shadow-sm">
+                      <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+                        <Icon className="h-4 w-4 text-primary" />{label}
                       </h4>
+                      <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{value}</p>
                     </div>
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                      {notice[key]}
-                    </p>
-                  </div>
-                ))}
-                <a
-                  href={`https://base-donnees-publique.medicaments.gouv.fr/medicament/${med.codeCIS}/extrait#tab-rcp`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-card p-4 shadow-sm text-sm font-medium text-primary hover:underline"
-                >
-                  <FileText className="h-4 w-4" />
-                  Consulter la notice complète sur la Base de données du médicament
-                </a>
+                  );
+                })}
               </div>
+            )}
+            {/* Link to official page */}
+            {med.codeCIS && (
+              <a
+                href={`https://base-donnees-publique.medicaments.gouv.fr/medicament/${med.codeCIS}/extrait#tab-rcp`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-card p-4 shadow-sm text-sm font-medium text-primary hover:underline"
+              >
+                <FileText className="h-4 w-4" />
+                Consulter la notice complète sur la Base de données du médicament
+              </a>
             )}
           </TabsContent>
         </Tabs>

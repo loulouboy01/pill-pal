@@ -1,4 +1,4 @@
-import { Medicament } from "@/types/medicament";
+import { Medicament, pluralizeUnite } from "@/types/medicament";
 import { useNavigate } from "react-router-dom";
 import { Pill } from "lucide-react";
 
@@ -7,7 +7,10 @@ interface MedicamentCardProps {
 }
 
 function formatPosologie(p: Medicament["posologie"]): string {
-  return `${p.matin}-${p.midi}-${p.soir}-${p.coucher}`;
+  if (!Array.isArray(p) || p.length === 0) return "Aucune prise";
+  return p.map((prise) =>
+    `${prise.quantite} ${pluralizeUnite(prise.unite, prise.quantite)}`
+  ).join(", ");
 }
 
 export function MedicamentCard({ medicament }: MedicamentCardProps) {
@@ -29,7 +32,7 @@ export function MedicamentCard({ medicament }: MedicamentCardProps) {
           <p className="mt-0.5 text-sm text-muted-foreground">
             {medicament.dosage}{medicament.forme ? ` · ${medicament.forme}` : ""}
           </p>
-          <p className="mt-1.5 inline-flex items-center rounded-lg bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground tabular-nums">
+          <p className="mt-1.5 inline-flex items-center rounded-lg bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
             {formatPosologie(medicament.posologie)}
           </p>
         </div>
