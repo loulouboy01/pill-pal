@@ -7,7 +7,7 @@ import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
 import { MedicationHistoryTab } from "@/components/MedicationHistoryTab";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle, History } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle, History } from "lucide-react";
 import { toast } from "sonner";
 
 interface NoticeInfo {
