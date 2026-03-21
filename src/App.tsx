@@ -8,6 +8,7 @@ import { RightSidebar } from "@/components/RightSidebar";
 import { ProfileNotificationProvider } from "@/contexts/ProfileNotificationContext";
 import { GlobalConfirmModal } from "@/components/GlobalConfirmModal";
 import Index from "./pages/Index";
+import MedicamentsPage from "./pages/MedicamentsPage";
 import AjouterPage from "./pages/AjouterPage";
 import ScannerPage from "./pages/ScannerPage";
 import DetailPage from "./pages/DetailPage";
