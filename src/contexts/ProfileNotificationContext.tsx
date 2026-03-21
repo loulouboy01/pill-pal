@@ -55,6 +55,8 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
   const [profile, setProfileState] = useState<UserProfile>(loadProfile);
   const [notifications, setNotifications] = useState<NotificationEntry[]>(loadNotifications);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [onClosePanel, setOnClosePanelState] = useState<(() => void) | undefined>(undefined);
+  const setOnClosePanel = useCallback((fn: (() => void) | undefined) => setOnClosePanelState(() => fn), []);
 
   const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
