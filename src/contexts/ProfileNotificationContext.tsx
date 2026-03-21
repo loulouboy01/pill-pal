@@ -22,6 +22,8 @@ interface ContextValue {
   notifications: NotificationEntry[];
   addNotification: (n: Omit<NotificationEntry, "id">) => void;
   updateNotificationStatus: (id: string, status: NotificationEntry["status"]) => void;
+  showConfirmModal: boolean;
+  setShowConfirmModal: (v: boolean) => void;
 }
 
 const ProfileNotificationContext = createContext<ContextValue | null>(null);
