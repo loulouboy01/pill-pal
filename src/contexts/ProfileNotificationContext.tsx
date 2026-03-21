@@ -76,7 +76,7 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
   }, []);
 
   return (
-    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal }}>
+    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal, onClosePanel, setOnClosePanel }}>
       {children}
     </ProfileNotificationContext.Provider>
   );
