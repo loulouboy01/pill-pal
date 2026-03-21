@@ -343,24 +343,6 @@ export default function Index() {
               </div>
             )}
 
-            {/* FAB */}
-            <div className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 gap-3">
-              <Button
-                onClick={() => navigate("/ajouter")}
-                className="h-12 rounded-2xl px-5 shadow-lg shadow-primary/20"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/scanner")}
-                className="h-12 rounded-2xl bg-card px-5 shadow-lg shadow-black/5"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner
-              </Button>
-            </div>
           </div>
         )}
       </main>
