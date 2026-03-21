@@ -7,7 +7,7 @@ import ExpliqueMoiButton from "@/components/ExpliqueMoiButton";
 import { MedicationHistoryTab } from "@/components/MedicationHistoryTab";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Pill, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle, History } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Hash, Pencil, Trash2, FileText, Loader2, AlertCircle, History } from "lucide-react";
 import { toast } from "sonner";
 
 interface NoticeInfo {
@@ -21,9 +21,9 @@ interface NoticeInfo {
   conservation: string;
 }
 
-const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Pill }[] = [
+const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Clock }[] = [
   { key: "posologie", label: "Posologie recommandée", icon: Clock },
-  { key: "modeAdministration", label: "Mode et voie d'administration", icon: Pill },
+  { key: "modeAdministration", label: "Mode et voie d'administration", icon: FileText },
   { key: "momentPrise", label: "Moment de prise", icon: Calendar },
   { key: "contreIndications", label: "Contre-indications", icon: AlertCircle },
   { key: "effetsIndesirables", label: "Effets indésirables", icon: AlertCircle },
@@ -101,8 +101,8 @@ export default function DetailPage() {
       <main className="mx-auto max-w-lg space-y-6 px-5 pb-12 pt-2">
         {/* Header card */}
         <div className="flex items-start gap-4 rounded-2xl bg-primary p-5 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/20">
-            <Pill className="h-6 w-6 text-primary-foreground" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/20 text-2xl">
+            💊
           </div>
           <div>
             <h2 className="text-lg font-semibold leading-snug text-primary-foreground">{med.nom}</h2>
