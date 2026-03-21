@@ -21,9 +21,9 @@ interface NoticeInfo {
   conservation: string;
 }
 
-const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Pill }[] = [
+const noticeFields: { key: keyof NoticeInfo; label: string; icon: typeof Clock }[] = [
   { key: "posologie", label: "Posologie recommandée", icon: Clock },
-  { key: "modeAdministration", label: "Mode et voie d'administration", icon: Pill },
+  { key: "modeAdministration", label: "Mode et voie d'administration", icon: FileText },
   { key: "momentPrise", label: "Moment de prise", icon: Calendar },
   { key: "contreIndications", label: "Contre-indications", icon: AlertCircle },
   { key: "effetsIndesirables", label: "Effets indésirables", icon: AlertCircle },
