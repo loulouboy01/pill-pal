@@ -31,7 +31,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const searchUrl = `${API_URL}/v1/medicaments?search=${encodeURIComponent(q)}`;
+    // Remove accents for better API matching
+    const normalizedQ = q.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const searchUrl = `${API_URL}/v1/medicaments?search=${encodeURIComponent(normalizedQ)}`;
 
     const response = await fetch(searchUrl);
     if (!response.ok) {
