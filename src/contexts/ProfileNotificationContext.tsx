@@ -22,6 +22,8 @@ interface ContextValue {
   notifications: NotificationEntry[];
   addNotification: (n: Omit<NotificationEntry, "id">) => void;
   updateNotificationStatus: (id: string, status: NotificationEntry["status"]) => void;
+  showConfirmModal: boolean;
+  setShowConfirmModal: (v: boolean) => void;
 }
 
 const ProfileNotificationContext = createContext<ContextValue | null>(null);
@@ -50,6 +52,7 @@ function loadNotifications(): NotificationEntry[] {
 export function ProfileNotificationProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<UserProfile>(loadProfile);
   const [notifications, setNotifications] = useState<NotificationEntry[]>(loadNotifications);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
@@ -69,7 +72,7 @@ export function ProfileNotificationProvider({ children }: { children: React.Reac
   }, []);
 
   return (
-    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus }}>
+    <ProfileNotificationContext.Provider value={{ profile, setProfile, notifications, addNotification, updateNotificationStatus, showConfirmModal, setShowConfirmModal }}>
       {children}
     </ProfileNotificationContext.Provider>
   );

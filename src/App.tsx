@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { RightSidebar } from "@/components/RightSidebar";
 import { ProfileNotificationProvider } from "@/contexts/ProfileNotificationContext";
+import { GlobalConfirmModal } from "@/components/GlobalConfirmModal";
 import Index from "./pages/Index";
 import AjouterPage from "./pages/AjouterPage";
 import ScannerPage from "./pages/ScannerPage";
@@ -39,6 +40,7 @@ const App = () => (
           <BottomTabBar />
           <RightSidebar />
         </BrowserRouter>
+        <GlobalConfirmModal />
       </ProfileNotificationProvider>
     </TooltipProvider>
   </QueryClientProvider>
