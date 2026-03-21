@@ -88,6 +88,14 @@ export default function ConsultationDetailPage() {
       </header>
 
       <main className="mx-auto max-w-lg px-5 pb-32">
+        <div className="pt-4 pb-3">
+          <ExpliqueMoiConsultationButton
+            transcription={consultation.transcription}
+            compteRendu={consultation.compteRendu}
+            dateLabel={format(new Date(consultation.date), "d MMMM yyyy", { locale: fr })}
+          />
+        </div>
+
         <Tabs defaultValue="compte-rendu" className="pt-2">
           <TabsList className="grid w-full grid-cols-2 rounded-xl">
             <TabsTrigger value="compte-rendu" className="rounded-lg text-xs">
