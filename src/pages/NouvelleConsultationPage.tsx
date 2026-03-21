@@ -87,11 +87,11 @@ export default function NouvelleConsultationPage() {
       recorder.stop();
     }
 
-    // Send remaining chunks
+    // Send final full recording
     if (chunksRef.current.length > 0) {
       const blob = new Blob(chunksRef.current, { type: "audio/webm;codecs=opus" });
-      chunksRef.current = [];
       await sendChunk(blob);
+      chunksRef.current = [];
     }
 
     // Stop stream
