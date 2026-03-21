@@ -101,8 +101,8 @@ export default function DetailPage() {
       <main className="mx-auto max-w-lg space-y-6 px-5 pb-12 pt-2">
         {/* Header card */}
         <div className="flex items-start gap-4 rounded-2xl bg-primary p-5 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/20">
-            <Pill className="h-6 w-6 text-primary-foreground" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/20 text-2xl">
+            💊
           </div>
           <div>
             <h2 className="text-lg font-semibold leading-snug text-primary-foreground">{med.nom}</h2>

@@ -21,8 +21,8 @@ export function MedicamentCard({ medicament }: MedicamentCardProps) {
       className="w-full text-left rounded-2xl bg-card p-4 shadow-[0_1px_3px_hsl(30_10%_15%/0.06),0_1px_2px_hsl(30_10%_15%/0.04)] transition-shadow duration-200 hover:shadow-[0_4px_12px_hsl(30_10%_15%/0.08),0_2px_4px_hsl(30_10%_15%/0.04)] active:scale-[0.98]"
     >
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <Pill className="h-5 w-5 text-primary" />
+        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
+          💊
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-semibold leading-tight text-foreground">
