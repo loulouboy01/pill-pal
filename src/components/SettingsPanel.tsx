@@ -5,20 +5,26 @@ import { Settings, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export function SettingsPanel() {
-  const { profile, addNotification, setShowConfirmModal } = useProfileNotification();
+  const { profile, addNotification, setShowConfirmModal, onClosePanel } = useProfileNotification();
 
   const simulateNotification = () => {
     const prenom = profile.prenom || "";
     const title = prenom ? `Il est l'heure, ${prenom}` : "Il est l'heure";
 
-    toast(title, {
-      description: "Cliquez pour indiquer que vous avez pris votre médicament",
-      duration: 5000,
-      action: {
-        label: "Ouvrir",
-        onClick: () => setShowConfirmModal(true),
-      },
-    });
+    // Close the sheet first so the toast is accessible
+    onClosePanel?.();
+
+    // Small delay to let sheet close before showing toast
+    setTimeout(() => {
+      toast(title, {
+        description: "Cliquez pour indiquer que vous avez pris votre médicament",
+        duration: 5000,
+        action: {
+          label: "Ouvrir",
+          onClick: () => setShowConfirmModal(true),
+        },
+      });
+    }, 300);
 
     addNotification({
       timestamp: new Date(),
