@@ -255,6 +255,15 @@ export default function DetailPage() {
                     </p>
                   </div>
                 ))}
+                <a
+                  href={`https://base-donnees-publique.medicaments.gouv.fr/medicament/${med.codeCIS}/extrait#tab-rcp`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-card p-4 shadow-sm text-sm font-medium text-primary hover:underline"
+                >
+                  <FileText className="h-4 w-4" />
+                  Consulter la notice complète sur la Base de données du médicament
+                </a>
               </div>
             )}
           </TabsContent>
