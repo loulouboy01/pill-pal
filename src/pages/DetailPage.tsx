@@ -104,6 +104,11 @@ export default function DetailPage() {
           </div>
         </div>
 
+        {/* Explique-moi button */}
+        {med.codeCIS && (
+          <ExpliqueMoiButton cis={med.codeCIS} nomMedicament={med.nom} />
+        )}
+
         {/* Tabs */}
         <Tabs defaultValue="infos" onValueChange={(v) => v === "notice" && handleFetchNotice()}>
           <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-muted p-1 h-11">
@@ -166,11 +171,6 @@ export default function DetailPage() {
                 </div>
               </div>
             </div>
-
-            {/* Explique-moi button */}
-            {med.codeCIS && (
-              <ExpliqueMoiButton cis={med.codeCIS} nomMedicament={med.nom} />
-            )}
 
             {/* Delete */}
             <Button variant="destructive" className="w-full rounded-2xl h-11" onClick={handleDelete}>
