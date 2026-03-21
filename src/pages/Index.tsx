@@ -25,7 +25,7 @@ export default function Index() {
         <div className="mx-auto flex max-w-lg items-center justify-between px-5 py-4">
           <div>
             <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
-              Mes traitements
+              {profile.prenom ? `Bonjour, ${profile.prenom}` : "Bonjour"}
             </h1>
             {!isEmpty && (
               <p className="mt-0.5 text-sm text-muted-foreground">

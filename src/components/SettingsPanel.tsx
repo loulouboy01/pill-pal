@@ -22,7 +22,6 @@ export function SettingsPanel() {
         label: "Ouvrir",
         onClick: () => setShowConfirm(true),
       },
-      onClick: () => setShowConfirm(true),
     });
 
     // Add pending notification
