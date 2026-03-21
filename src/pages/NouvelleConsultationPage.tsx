@@ -27,7 +27,7 @@ export default function NouvelleConsultationPage() {
     try {
       const text = await transcribeAudio(blob);
       if (text) {
-        setTranscription((prev) => (prev ? prev + " " + text : text));
+        setTranscription(text);
       }
     } catch {
       console.error("Erreur de transcription d'un chunk");
