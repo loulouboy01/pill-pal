@@ -5,6 +5,7 @@ import { Medicament } from "@/types/medicament";
 import { MedicamentCard } from "@/components/MedicamentCard";
 import { Plus, ScanLine, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
 
 export default function Index() {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
