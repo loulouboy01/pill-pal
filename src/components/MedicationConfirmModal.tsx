@@ -5,6 +5,8 @@ import { Clock } from "lucide-react";
 interface Props {
   open: boolean;
   prenom: string;
+  medicamentNom?: string;
+  medicamentDosage?: string;
   onConfirm: () => void;
   onPostpone: () => void;
   onClose: () => void;
