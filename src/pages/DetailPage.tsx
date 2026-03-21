@@ -182,6 +182,11 @@ export default function DetailPage() {
               </div>
             </div>
 
+            {/* Chatbot */}
+            {med.codeCIS && (
+              <ExpliqueMoiButton cis={med.codeCIS} nomMedicament={med.nom} />
+            )}
+
             {/* Delete */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
