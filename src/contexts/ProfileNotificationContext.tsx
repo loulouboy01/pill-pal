@@ -52,6 +52,7 @@ function loadNotifications(): NotificationEntry[] {
 export function ProfileNotificationProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<UserProfile>(loadProfile);
   const [notifications, setNotifications] = useState<NotificationEntry[]>(loadNotifications);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const setProfile = useCallback((p: UserProfile) => {
     setProfileState(p);
