@@ -100,13 +100,13 @@ export default function DetailPage() {
 
       <main className="mx-auto max-w-lg space-y-6 px-5 pb-12 pt-2">
         {/* Header card */}
-        <div className="flex items-start gap-4 rounded-2xl bg-card p-5 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
-            <Pill className="h-6 w-6 text-primary" />
+        <div className="flex items-start gap-4 rounded-2xl bg-primary p-5 shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/20">
+            <Pill className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold leading-snug text-foreground">{med.nom}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h2 className="text-lg font-semibold leading-snug text-primary-foreground">{med.nom}</h2>
+            <p className="mt-1 text-sm text-primary-foreground/80">
               {med.dosage}{med.forme ? ` · ${med.forme}` : ""}
             </p>
           </div>
