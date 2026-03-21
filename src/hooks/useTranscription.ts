@@ -1,0 +1,222 @@
+import { useState, useRef, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Utterance {
+  speaker: string;
+  text: string;
+  start: number;
+  end: number;
+  confidence: number;
+  words: Array<{
+    text: string;
+    start: number;
+    end: number;
+    speaker: string;
+    confidence: number;
+  }>;
+}
+
+export interface TranscriptionResult {
+  text: string;
+  utterances: Utterance[];
+  audioDuration: number;
+}
+
+export type TranscriptionStatus =
+  | "idle"
+  | "recording"
+  | "uploading"
+  | "transcribing"
+  | "completed"
+  | "error";
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export function useTranscription(options?: {
+  language?: string;
+  speakersExpected?: number;
+}) {
+  const { language = "fr", speakersExpected } = options || {};
+
+  const [status, setStatus] = useState<TranscriptionStatus>("idle");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [result, setResult] = useState<TranscriptionResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [duration, setDuration] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const processAudio = useCallback(async (audioBlob: Blob) => {
+    try {
+      setStatus("uploading");
+      setStatusMessage("Envoi de l'audio...");
+
+      const base64 = await blobToBase64(audioBlob);
+
+      const { data: uploadData, error: uploadError } =
+        await supabase.functions.invoke("transcribe-audio", {
+          body: { action: "upload", audioData: base64 },
+        });
+
+      if (uploadError || !uploadData?.upload_url) {
+        throw new Error(uploadError?.message || "Upload failed");
+      }
+
+      setStatus("transcribing");
+      setStatusMessage("Transcription en cours...");
+
+      const { data: transcribeData, error: transcribeError } =
+        await supabase.functions.invoke("transcribe-audio", {
+          body: {
+            action: "transcribe",
+            audioUrl: uploadData.upload_url,
+            language,
+            speakersExpected,
+          },
+        });
+
+      if (transcribeError || !transcribeData?.id) {
+        throw new Error(transcribeError?.message || "Transcription start failed");
+      }
+
+      const transcriptId = transcribeData.id;
+      let attempts = 0;
+      const maxAttempts = 200;
+
+      while (attempts < maxAttempts) {
+        const { data: pollData, error: pollError } =
+          await supabase.functions.invoke("transcribe-audio", {
+            body: { action: "poll", transcriptId },
+          });
+
+        if (pollError) throw new Error(pollError.message);
+
+        if (pollData.status === "completed") {
+          setResult({
+            text: pollData.text,
+            utterances: pollData.utterances || [],
+            audioDuration: pollData.audio_duration || 0,
+          });
+          setStatus("completed");
+          setStatusMessage("Transcription terminée !");
+          return;
+        }
+
+        if (pollData.status === "error") {
+          throw new Error(pollData.error || "Transcription error");
+        }
+
+        attempts++;
+        setStatusMessage(
+          `Transcription en cours... ${Math.round((attempts * 3) / 60)} min`
+        );
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+
+      throw new Error("Délai d'attente dépassé");
+    } catch (err: any) {
+      setError(err.message);
+      setStatus("error");
+      setStatusMessage("");
+    }
+  }, [language, speakersExpected]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      setError(null);
+      setResult(null);
+      setDuration(0);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 },
+      });
+
+      streamRef.current = stream;
+      chunksRef.current = [];
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.start(1000);
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      setStatus("recording");
+      setStatusMessage("Enregistrement en cours...");
+
+      timerRef.current = setInterval(() => {
+        setDuration((d) => d + 1);
+      }, 1000);
+    } catch {
+      setError("Impossible d'accéder au microphone. Vérifiez les permissions.");
+      setStatus("error");
+    }
+  }, []);
+
+  const stopRecording = useCallback(async () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    return new Promise<void>((resolve) => {
+      const mediaRecorder = mediaRecorderRef.current;
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        resolve();
+        return;
+      }
+
+      mediaRecorder.onstop = async () => {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        setIsRecording(false);
+
+        const audioBlob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
+        await processAudio(audioBlob);
+        resolve();
+      };
+
+      mediaRecorder.stop();
+    });
+  }, [processAudio]);
+
+  const reset = useCallback(() => {
+    setStatus("idle");
+    setStatusMessage("");
+    setResult(null);
+    setError(null);
+    setDuration(0);
+  }, []);
+
+  return {
+    status,
+    statusMessage,
+    result,
+    error,
+    isRecording,
+    duration,
+    startRecording,
+    stopRecording,
+    reset,
+  };
+}

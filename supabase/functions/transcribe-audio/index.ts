@@ -1,10 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+const ASSEMBLYAI_API_KEY = Deno.env.get("ASSEMBLYAI_API_KEY")!;
+const BASE_URL = "https://api.assemblyai.com/v2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,66 +22,98 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "Clé API OpenAI non configurée" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const body = await req.json();
+    const { action } = body;
+
+    // ─── UPLOAD : reçoit le blob audio en base64, l'envoie à AssemblyAI ───
+    if (action === "upload") {
+      const { audioData } = body;
+
+      const binaryString = atob(audioData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const uploadRes = await fetch(`${BASE_URL}/upload`, {
+        method: "POST",
+        headers: {
+          authorization: ASSEMBLYAI_API_KEY,
+        },
+        body: bytes,
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.text();
+        return jsonResponse({ error: `Upload failed: ${err}` }, 500);
+      }
+
+      const { upload_url } = await uploadRes.json();
+      return jsonResponse({ upload_url });
     }
 
-    const formData = await req.formData();
-    const audioFile = formData.get("audio");
+    // ─── TRANSCRIBE : lance la transcription avec diarisation ───
+    if (action === "transcribe") {
+      const { audioUrl, language, speakersExpected } = body;
 
-    if (!audioFile || !(audioFile instanceof File)) {
-      return new Response(
-        JSON.stringify({ error: "Fichier audio requis" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const transcribeBody: Record<string, unknown> = {
+        audio_url: audioUrl,
+        speaker_labels: true,
+        language_code: language || "fr",
+      };
+
+      if (speakersExpected && speakersExpected > 0) {
+        transcribeBody.speakers_expected = speakersExpected;
+      }
+
+      const transcribeRes = await fetch(`${BASE_URL}/transcript`, {
+        method: "POST",
+        headers: {
+          authorization: ASSEMBLYAI_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transcribeBody),
+      });
+
+      if (!transcribeRes.ok) {
+        const err = await transcribeRes.text();
+        return jsonResponse({ error: `Transcription failed: ${err}` }, 500);
+      }
+
+      const transcript = await transcribeRes.json();
+      return jsonResponse({ id: transcript.id, status: transcript.status });
     }
 
-    // Re-create the file with explicit type to ensure Whisper recognizes the format
-    const audioBytes = await audioFile.arrayBuffer();
-    const properFile = new File([audioBytes], "audio.webm", { type: "audio/webm" });
+    // ─── POLL : vérifie le statut et récupère le résultat ───
+    if (action === "poll") {
+      const { transcriptId } = body;
 
-    const whisperForm = new FormData();
-    whisperForm.append("file", properFile);
-    whisperForm.append("model", "whisper-1");
-    whisperForm.append("language", "fr");
-    whisperForm.append("response_format", "text");
-    whisperForm.append(
-      "prompt",
-      "Transcription d'une consultation médicale en français. Termes médicaux courants : ordonnance, posologie, comprimé, gélule, milligrammes, tension, glycémie, cholestérol."
-    );
+      const pollRes = await fetch(`${BASE_URL}/transcript/${transcriptId}`, {
+        headers: { authorization: ASSEMBLYAI_API_KEY },
+      });
 
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: whisperForm,
-    });
+      const result = await pollRes.json();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI Whisper error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "Erreur lors de la transcription" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (result.status === "completed") {
+        return jsonResponse({
+          status: "completed",
+          text: result.text,
+          utterances: result.utterances,
+          words: result.words,
+          audio_duration: result.audio_duration,
+        });
+      }
+
+      if (result.status === "error") {
+        return jsonResponse({ status: "error", error: result.error }, 500);
+      }
+
+      return jsonResponse({ status: result.status });
     }
 
-    const text = await response.text();
-
-    return new Response(
-      JSON.stringify({ text: text.trim() }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    console.error("Error:", err);
-    return new Response(
-      JSON.stringify({ error: "Erreur interne du serveur" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: "Invalid action" }, 400);
+  } catch (error) {
+    console.error("Error:", error);
+    return jsonResponse({ error: error.message }, 500);
   }
 });
