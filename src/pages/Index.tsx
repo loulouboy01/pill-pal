@@ -178,19 +178,11 @@ export default function Index() {
             </p>
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
               <Button
-                onClick={() => navigate("/ajouter")}
+                onClick={() => navigate("/medicaments")}
                 className="h-12 rounded-2xl text-sm font-medium"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter manuellement
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/scanner")}
-                className="h-12 rounded-2xl text-sm font-medium"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner une ordonnance
+                <Pill className="mr-2 h-4 w-4" />
+                Aller aux médicaments
               </Button>
             </div>
           </div>
