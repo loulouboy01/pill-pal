@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Pill, Stethoscope } from "lucide-react";
+import { Home, Pill, Stethoscope } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { path: "/", label: "Médicaments", icon: Pill },
+  { path: "/", label: "Accueil", icon: Home },
+  { path: "/medicaments", label: "Médicaments", icon: Pill },
   { path: "/consultations", label: "Consultations", icon: Stethoscope },
 ];
 
@@ -12,13 +13,16 @@ export function BottomTabBar() {
   const navigate = useNavigate();
 
   const activeTab = tabs.find((t) => {
-    if (t.path === "/") {
+    if (t.path === "/medicaments") {
       return (
-        location.pathname === "/" ||
+        location.pathname === "/medicaments" ||
         location.pathname.startsWith("/ajouter") ||
         location.pathname.startsWith("/scanner") ||
         location.pathname.startsWith("/medicament")
       );
+    }
+    if (t.path === "/") {
+      return location.pathname === "/";
     }
     return location.pathname.startsWith(t.path);
   });

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMedicaments } from "@/lib/medicaments-storage";
 import { Medicament, pluralizeUnite } from "@/types/medicament";
-import { Plus, ScanLine, Pill, Check } from "lucide-react";
+import { Pill, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useProfileNotification } from "@/contexts/ProfileNotificationContext";
@@ -174,23 +174,15 @@ export default function Index() {
               Aucun médicament enregistré
             </h2>
             <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Ajoutez vos médicaments dans l'onglet dédié pour voir votre tableau de bord quotidien.
+              Ajoutez vos médicaments dans l'onglet Médicaments pour voir votre tableau de bord quotidien.
             </p>
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
               <Button
-                onClick={() => navigate("/ajouter")}
+                onClick={() => navigate("/medicaments")}
                 className="h-12 rounded-2xl text-sm font-medium"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter manuellement
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/scanner")}
-                className="h-12 rounded-2xl text-sm font-medium"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner une ordonnance
+                <Pill className="mr-2 h-4 w-4" />
+                Aller aux médicaments
               </Button>
             </div>
           </div>
@@ -351,24 +343,6 @@ export default function Index() {
               </div>
             )}
 
-            {/* FAB */}
-            <div className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 gap-3">
-              <Button
-                onClick={() => navigate("/ajouter")}
-                className="h-12 rounded-2xl px-5 shadow-lg shadow-primary/20"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/scanner")}
-                className="h-12 rounded-2xl bg-card px-5 shadow-lg shadow-black/5"
-              >
-                <ScanLine className="mr-2 h-4 w-4" />
-                Scanner
-              </Button>
-            </div>
           </div>
         )}
       </main>
