@@ -1,0 +1,6 @@
+{
+	"appId": "com.pillpal.app",
+	"appName": "Pill Pal",
+	"webDir": "dist",
+	"packageClassList": []
+}
