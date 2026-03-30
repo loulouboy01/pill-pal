@@ -4,7 +4,7 @@ Clarimed est une application pensée pour simplifier le suivi médical au quotid
 
 L'objectif est simple : ne plus jamais oublier un médicament, une posologie, ou ce que le médecin a dit.
 
-Vous pouvez tester l'application sur www.clarimed.boyot.eu
+Vous pouvez tester l'application sur https://clarimed.boyot.eu
 ---
 
 ## Ce que fait l'application
